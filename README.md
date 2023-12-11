@@ -38,4 +38,8 @@ The **Web API Data Synchronization** script is designed to streamline inventory 
 
 Consider a scenario where an external system needs to synchronize inventory adjustments with an Odoo database. The script seamlessly integrates incoming data, creating production orders and lot records for accurate inventory management. This tool is invaluable for businesses relying on real-time inventory tracking and adjustments.
 
-**Author:** César Rodríguez
+## Version Information
+
+- **Author:** César Rodríguez
+- **Date:** 06/10/2023
+- **Version:** 1.0.0
