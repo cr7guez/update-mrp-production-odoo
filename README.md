@@ -41,5 +41,5 @@ Consider a scenario where an external system needs to synchronize inventory adju
 ## Version Information
 
 - **Author:** César Rodríguez
-- **Date:** 06/10/2023
-- **Version:** 1.0.0
+- **Date:** 13/12/2023
+- **Version:** 1.1.0
