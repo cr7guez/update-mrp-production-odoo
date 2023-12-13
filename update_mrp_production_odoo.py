@@ -4,69 +4,76 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# Connection data for Odoo
-data_url = 'enter Odoo URL here'
-database = 'enter Odoo database name here'
-user = 'enter Odoo username here'
-password = 'enter Odoo API key here'
+# Datos de conexión a Odoo
+data_url = 'http://95.62.94.92:8069/'
+database = 'Tubau_V16'
+user = 'lluis.gomez@lancer-digital.com'
+password = '906d47c104a5e9b6eced41388b7094ae10dc3d26'
 
-# Connection to Odoo using XML-RPC
+# Conexión a Odoo mediante XML-RPC
 common = xmlrpclib.ServerProxy(f'{data_url}xmlrpc/2/common')
 uid = common.authenticate(database, user, password, {})
+
 models = xmlrpclib.ServerProxy(f'{data_url}xmlrpc/2/object')
 
-# Counter for the incremental ID of the lot
+# Contador para el ID incremental del lote
 current_year = datetime.now().year
-lote_counter = 1  # Initialize the counter
+lote_counter = 1  # Inicializar el contador
 
-def create_lot(lot_name, product_id):
-    lot_vals = {
-        'name': lot_name,
-        'product_id': product_id,
+def crear_lote(nombre_lote, producto_id):
+    data_json = request.json  # Definir data_json aquí
+    lote = data_json['lote']
+    lote_vals = {
+        'name': lote,
+        'product_id': producto_id,
     }
-    lot_id = models.execute_kw(database, uid, password, 'stock.lot', 'create', [lot_vals])
-    return lot_id
+    lote_id = models.execute_kw(database, uid, password, 'stock.lot', 'create', [lote_vals])
+    return lote_id
 
-# Route to receive REST data
-@app.route('/inventoryAdjustments', methods=['POST'])
-def receive_data():
+# Ruta para recibir datos REST
+@app.route('/ajustesInventario', methods=['POST'])
+def recepcion_datos():
     try:
-        global lote_counter  # Reference the global variable
-        data_json = request.json  # Define data_json here
+        global lote_counter  # Hacer referencia a la variable global
+        data_json = request.json  # Definir data_json aquí
 
-        article = data_json['article']
+        articulo = data_json['articulo']
 
-        # Get the product ID based on the 'article' variable
-        product_ids = models.execute_kw(database, uid, password, 'product.product', 'search', [[['default_code', '=', article]]], {'limit': 1})
+        # Obtener el ID del producto a partir de la variable 'articulo'
+        producto_ids = models.execute_kw(database, uid, password, 'product.product', 'search', [[['default_code', '=', articulo]]], {'limit': 1})
 
-        if not product_ids:
-            raise Exception(f'Product not found with name: {article}')
+        if not producto_ids:
+            raise Exception(f'No se encontró el producto con nombre: {articulo}')
 
-        # Create a lot with the same value as lote_counter
-        global lote_counter  # Reference the global variable
-        lote_counter_str = str(lote_counter).zfill(4)  # Fill with zeros
-        lot = f'{current_year}{lote_counter_str}'
-        lote_counter += 1  # Increment the counter
+        # Crear un lote con el mismo valor que lote_counter
+        # global lote_counter  # Hacer referencia a la variable global
+        # lote_counter_str = str(lote_counter).zfill(4)  # Rellenar con ceros
+        # lote = f'{current_year}{lote_counter_str}'
+        # lote_counter += 1  # Incrementar el contador
 
-        linear_meters = data_json['linear_meters']
-        cant_float = float(linear_meters)
+        metros_lineales = data_json['metros_lineales']
+        cant_float = float(metros_lineales)
 
-        # Create a new record in mrp.production
+        # Crear un nuevo registro en mrp.production
         production_order_vals = {
-            'product_id': product_ids[0],  # Take the first product ID
+            'product_id': producto_ids[0],  # Tomar el primer identificador de producto
             'lot_producing_id': 1,
             'product_qty': cant_float
         }
         stock_quant_id = models.execute_kw(database, uid, password, 'mrp.production', 'create', [production_order_vals])
 
-        # Create a new lot
-        lot_id = create_lot(lot, product_ids[0])
+        lote = data_json['lote']
+        cantidad = data_json['cantidad']
+        bobina = data_json['bobina']
+        
+        # Crear un nuevo lote
+        lote_id = crear_lote(lote, producto_ids[0])
 
-        print({'Status': 'Uploaded Successfully', 'Product': article, 'Lot': lot})
-        return jsonify({'Status': 'Uploaded Successfully', 'Product': article, 'Lot': lot})
+        print({'Estado': 'Súbido Correctamente', 'Producto': articulo, 'Lote': lote})
+        return jsonify({'Estado': 'Súbido Correctamente', 'Producto': articulo, 'Lote': lote})
 
     except Exception as e:
-        print("NOT OK: ", e)
+        print("NO OK: ", e)
         return jsonify({'status': 'error', 'message': str(e)})
 
 if __name__ == '__main__':
